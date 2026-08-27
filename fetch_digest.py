@@ -10,6 +10,10 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+# Force UTF-8 output on Windows (default cp1252 can't handle emoji)
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 import feedparser
 import requests
 from bs4 import BeautifulSoup

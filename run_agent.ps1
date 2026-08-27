@@ -7,9 +7,19 @@
 #>
 
 $ErrorActionPreference = "Continue"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$env:PYTHONIOENCODING = "utf-8"
+
 $PROJECT_DIR = "C:\Users\mitta\ai-daily-digest"
 $LOG_FILE = "$PROJECT_DIR\agent.log"
 $LOCK_FILE = "$PROJECT_DIR\.running.lock"
+
+# Ensure gh is on PATH
+if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+    if (Test-Path "C:\Program Files\GitHub CLI\gh.exe") {
+        $env:PATH = "C:\Program Files\GitHub CLI;$env:PATH"
+    }
+}
 
 function Write-Log {
     param([string]$Message)
@@ -19,25 +29,25 @@ function Write-Log {
 
 function Test-InternetConnection {
     try {
-        $result = Test-Connection -ComputerName "github.com" -Count 1 -Quiet -TimeoutSeconds 5
-        return $result
+        $response = Invoke-WebRequest -Uri "https://github.com" -Method Head -TimeoutSec 5 -UseBasicParsing -ErrorAction Stop
+        return $true
     } catch {
         return $false
     }
 }
 
-# ─── Main Logic ──────────────────────────────────────────────────────────────
+# --- Main Logic ---
 
-Write-Log "🚀 AI Daily Digest agent started"
+Write-Log "Agent started"
 
 # Prevent duplicate runs
 if (Test-Path $LOCK_FILE) {
     $lockAge = (Get-Date) - (Get-Item $LOCK_FILE).LastWriteTime
     if ($lockAge.TotalMinutes -lt 30) {
-        Write-Log "⏭ Another instance is running (lock is $([int]$lockAge.TotalMinutes)m old). Exiting."
+        Write-Log "Another instance is running (lock is $([int]$lockAge.TotalMinutes)m old). Exiting."
         exit 0
     }
-    Write-Log "🔓 Stale lock found, removing."
+    Write-Log "Stale lock found, removing."
     Remove-Item $LOCK_FILE -Force
 }
 
@@ -45,18 +55,18 @@ New-Item -Path $LOCK_FILE -ItemType File -Force | Out-Null
 
 try {
     # Wait for internet (up to 5 minutes)
-    Write-Log "📡 Checking internet connection..."
+    Write-Log "Checking internet connection..."
     $retries = 0
     while (-not (Test-InternetConnection)) {
         $retries++
         if ($retries -ge 30) {
-            Write-Log "❌ No internet after 5 minutes. Aborting."
+            Write-Log "No internet after 5 minutes. Aborting."
             exit 1
         }
-        Write-Log "  ⏳ No internet. Retry $retries/30..."
+        Write-Log "  No internet. Retry $retries/30..."
         Start-Sleep -Seconds 10
     }
-    Write-Log "✅ Internet is available"
+    Write-Log "Internet is available"
 
     # Navigate to project
     Set-Location $PROJECT_DIR
@@ -66,39 +76,38 @@ try {
     $digestFile = "digests\$today.md"
 
     if (Test-Path $digestFile) {
-        Write-Log "✅ Digest for $today already exists and committed. Skipping."
-        # Still try to push in case a previous push failed
+        Write-Log "Digest for $today already exists. Trying to push..."
         git push origin main 2>&1 | ForEach-Object { Write-Log "  git: $_" }
         exit 0
     }
 
     # Run the Python fetcher
-    Write-Log "📰 Running digest fetcher..."
+    Write-Log "Running digest fetcher..."
     $pythonOutput = python "$PROJECT_DIR\fetch_digest.py" 2>&1
     $pythonOutput | ForEach-Object { Write-Log "  py: $_" }
 
     if (-not (Test-Path $digestFile)) {
-        Write-Log "❌ Digest file was not created. Something went wrong."
+        Write-Log "ERROR: Digest file was not created. Something went wrong."
         exit 1
     }
 
     # Git add, commit, push
-    Write-Log "📤 Committing and pushing to GitHub..."
+    Write-Log "Committing and pushing to GitHub..."
 
     git add -A 2>&1 | ForEach-Object { Write-Log "  git: $_" }
 
-    $commitMsg = "📰 AI Digest for $today - Auto-generated"
+    $commitMsg = "AI Digest for $today - Auto-generated"
     git commit -m $commitMsg 2>&1 | ForEach-Object { Write-Log "  git: $_" }
 
     git push origin main 2>&1 | ForEach-Object { Write-Log "  git: $_" }
 
-    Write-Log "✅ Successfully committed and pushed digest for $today"
+    Write-Log "Successfully committed and pushed digest for $today"
 
 } catch {
-    Write-Log "❌ Error: $_"
+    Write-Log "ERROR: $_"
     exit 1
 } finally {
     Remove-Item $LOCK_FILE -Force -ErrorAction SilentlyContinue
-    Write-Log "🏁 Agent finished"
-    Write-Log "────────────────────────────────────────"
+    Write-Log "Agent finished"
+    Write-Log "----------------------------------------"
 }
