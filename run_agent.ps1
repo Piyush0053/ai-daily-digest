@@ -3,7 +3,12 @@
     AI Daily Digest - Auto-commit agent
 .DESCRIPTION
     Fetches the latest AI news/repos, generates a digest, commits, and pushes to GitHub.
-    Designed to be triggered by Windows Task Scheduler on internet connection or daily.
+    Triggered by Windows Task Scheduler (daily at 9 AM + on internet connect).
+
+Exit codes from fetch_digest.py:
+    0 = success or "already done today"
+    1 = error / crash
+    2 = skip commit (not enough articles found, will retry next trigger)
 #>
 
 $ErrorActionPreference = "Continue"
@@ -11,8 +16,8 @@ $ErrorActionPreference = "Continue"
 $env:PYTHONIOENCODING = "utf-8"
 
 $PROJECT_DIR = "C:\Users\mitta\ai-daily-digest"
-$LOG_FILE = "$PROJECT_DIR\agent.log"
-$LOCK_FILE = "$PROJECT_DIR\.running.lock"
+$LOG_FILE    = "$PROJECT_DIR\agent.log"
+$LOCK_FILE   = "$PROJECT_DIR\.running.lock"
 
 # Ensure gh is on PATH
 if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
@@ -29,7 +34,8 @@ function Write-Log {
 
 function Test-InternetConnection {
     try {
-        $response = Invoke-WebRequest -Uri "https://github.com" -Method Head -TimeoutSec 5 -UseBasicParsing -ErrorAction Stop
+        Invoke-WebRequest -Uri "https://github.com" -Method Head `
+            -TimeoutSec 5 -UseBasicParsing -ErrorAction Stop | Out-Null
         return $true
     } catch {
         return $false
@@ -40,21 +46,22 @@ function Test-InternetConnection {
 
 Write-Log "Agent started"
 
-# Prevent duplicate runs
+# FIX: Lock timeout reduced from 30 min to 10 min.
+# Old value was too long — a crash would block the next 30-minute window.
 if (Test-Path $LOCK_FILE) {
     $lockAge = (Get-Date) - (Get-Item $LOCK_FILE).LastWriteTime
-    if ($lockAge.TotalMinutes -lt 30) {
+    if ($lockAge.TotalMinutes -lt 10) {
         Write-Log "Another instance is running (lock is $([int]$lockAge.TotalMinutes)m old). Exiting."
         exit 0
     }
-    Write-Log "Stale lock found, removing."
+    Write-Log "Stale lock found ($([int]$lockAge.TotalMinutes)m old), removing."
     Remove-Item $LOCK_FILE -Force
 }
 
 New-Item -Path $LOCK_FILE -ItemType File -Force | Out-Null
 
 try {
-    # Wait for internet (up to 5 minutes)
+    # Wait for internet — up to 5 minutes with HTTP check (not ICMP ping)
     Write-Log "Checking internet connection..."
     $retries = 0
     while (-not (Test-InternetConnection)) {
@@ -63,20 +70,19 @@ try {
             Write-Log "No internet after 5 minutes. Aborting."
             exit 1
         }
-        Write-Log "  No internet. Retry $retries/30..."
+        Write-Log "  No internet. Retry $retries/30 (waiting 10s)..."
         Start-Sleep -Seconds 10
     }
     Write-Log "Internet is available"
 
-    # Navigate to project
     Set-Location $PROJECT_DIR
 
     # Check if today's digest already exists
-    $today = Get-Date -Format "yyyy-MM-dd"
+    $today      = Get-Date -Format "yyyy-MM-dd"
     $digestFile = "digests\$today.md"
 
     if (Test-Path $digestFile) {
-        Write-Log "Digest for $today already exists. Trying to push..."
+        Write-Log "Digest for $today already exists. Trying to push any pending commits..."
         git push origin main 2>&1 | ForEach-Object { Write-Log "  git: $_" }
         exit 0
     }
@@ -84,10 +90,23 @@ try {
     # Run the Python fetcher
     Write-Log "Running digest fetcher..."
     $pythonOutput = python "$PROJECT_DIR\fetch_digest.py" 2>&1
+    $exitCode     = $LASTEXITCODE
     $pythonOutput | ForEach-Object { Write-Log "  py: $_" }
 
+    # FIX: Handle exit code 2 = "skip commit" (not enough articles)
+    # Old code: always tried to commit even on failure
+    if ($exitCode -eq 2) {
+        Write-Log "Skipping commit — not enough articles fetched. Will retry on next trigger."
+        exit 0
+    }
+
+    if ($exitCode -ne 0) {
+        Write-Log "ERROR: Python script failed with exit code $exitCode."
+        exit 1
+    }
+
     if (-not (Test-Path $digestFile)) {
-        Write-Log "ERROR: Digest file was not created. Something went wrong."
+        Write-Log "ERROR: Digest file was not created despite exit code 0."
         exit 1
     }
 
@@ -99,9 +118,16 @@ try {
     $commitMsg = "AI Digest for $today - Auto-generated"
     git commit -m $commitMsg 2>&1 | ForEach-Object { Write-Log "  git: $_" }
 
-    git push origin main 2>&1 | ForEach-Object { Write-Log "  git: $_" }
+    $pushOutput = git push origin main 2>&1
+    $pushExit   = $LASTEXITCODE
+    $pushOutput | ForEach-Object { Write-Log "  git: $_" }
 
-    Write-Log "Successfully committed and pushed digest for $today"
+    # FIX: Old code logged "success" even when push failed silently
+    if ($pushExit -eq 0) {
+        Write-Log "Successfully committed and pushed digest for $today"
+    } else {
+        Write-Log "WARNING: Commit succeeded but push failed (exit $pushExit). Will retry on next trigger."
+    }
 
 } catch {
     Write-Log "ERROR: $_"

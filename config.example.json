@@ -1,0 +1,5 @@
+{
+  "_comment": "Copy this file to config.json and fill in your keys. config.json is gitignored.",
+  "github_token": "",
+  "groq_api_key": ""
+}

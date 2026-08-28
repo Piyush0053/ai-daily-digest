@@ -1,160 +1,26 @@
 # 🤖 AI Daily Digest
 
-Automated daily tracker of AI news, new agents, and trending repositories.
+Automated daily tracker of the **latest AI news** and **trending open-source AI/agent repositories** on GitHub.
 
-Every day, this repo is automatically updated with:
-- 📰 **Top AI news** from major tech publications
-- 🚀 **Trending AI/agent repos** newly created on GitHub
+Every day this repo auto-updates with:
+- 📰 Top AI news from MIT Technology Review, The Verge, VentureBeat, Ars Technica, TechCrunch
+- 🚀 Newly created AI/agent GitHub repos sorted by stars
+
+---
 
 ## 📅 Latest Digest
 
-# 🤖 AI Daily Digest — Friday, August 28, 2026
-
-> Auto-generated at 07:22 AM IST | Tracking the latest in AI news & open-source agents
+👉 **[2026-08-28](digests/2026-08-28.md)**
 
 ---
-
-## 📰 Top AI News Today
-
-### 1. The inside story on why OpenAI agents hacked Hugging Face
-**Source:** MIT Technology Review · **Date:** 2026-08-26
-
-> The models responsible for last month’s agent hack of Hugging Face had been inadvertently trained to cheat and to communicate with each other, according to an OpenAI technical report released today. The hack, which a group of agents undertook to find solutions for a cybersecurity test that they were
-
-🔗 [Read more](https://www.technologyreview.com/2026/08/26/1143013/the-inside-story-on-why-openai-agents-hacked-hugging-face/)
-
-### 2. Raised on AI
-**Source:** MIT Technology Review · **Date:** 2026-08-26
-
-> When my oldest child was born, I immediately set up Gmail and Twitter accounts in her name. I broadly announced her birth online and proceeded to plaster her photo across all sorts of platforms. In short, I began creating her digital footprint long before she could stand on her own two feet.  Fast-f
-
-🔗 [Read more](https://www.technologyreview.com/2026/08/26/1141949/editors-letter-september-2026/)
-
-### 3. AI models flub these intelligence tests. Can you fare any better?
-**Source:** MIT Technology Review · **Date:** 2026-08-26
-
-> Puzzles and games have been central to AI development since the very beginning. Just as we humans like to test our smarts with crosswords or logic puzzles, developers can test how far models have advanced with a gaming gauntlet. The term “machine learning” was popularized in a 1959 article by the IB
-
-🔗 [Read more](https://www.technologyreview.com/2026/08/26/1141952/puzzles-ai-models-flub-these-tests/)
-
-### 4. Bill Gates says we’ve passed AI’s danger thresholds. Now what?
-**Source:** MIT Technology Review · **Date:** 2026-08-26
-
-> It’s a glorious day in Kirkland, Washington, an affluent Seattle suburb on the eastern shore of Lake Washington. The temperature is in the mid-80s, and the sky is incapable of being any more blue. The view from the Gates Ventures conference room overlooks the Carillon Point Marina, where a flotilla 
-
-🔗 [Read more](https://www.technologyreview.com/2026/08/26/1142946/bill-gates-ai-danger-threshold/)
-
-### 5. Enterprise AI's real risk isn't autonomous agents. It's the complexity between them.
-**Source:** VentureBeat · **Date:** 2026-08-27
-
-> Presented by GraviteeAgent complexity is the insidious shadow lurking inside enterprises right now that needs a light shone on it.That’s because enterprises don't deploy a single agent and watch it run, they deploy fleets, each one calling APIs, calling other agents, reaching into applications that 
-
-🔗 [Read more](https://venturebeat.com/ai/enterprise-ais-real-risk-isnt-autonomous-agents-its-the-complexity-between-them)
-
-### 6. When agents act on their own, governance has to live in the data layer
-**Source:** VentureBeat · **Date:** 2026-08-27
-
-> Presented by EDBAs enterprises give AI agents more autonomy — the ability to plan, decide, and act across systems without a human approving each step — a hard question moves to the center of every architecture review: When an agent tries to complete an action that it was never authorized to do, what
-
-🔗 [Read more](https://venturebeat.com/security/when-agents-act-on-their-own-governance-has-to-live-in-the-data-layer)
-
-### 7. Orchestration is the new challenge for CX in the age of AI agents
-**Source:** VentureBeat · **Date:** 2026-08-26
-
-> Presented by Tata CommunicationsEnterprises are deploying AI agents, voice AI, and automation across messaging, voice, and digital channels faster than the architecture meant to support it. Most of that deployment has involved attaching conversational AI to legacy systems never built for it, says Ga
-
-🔗 [Read more](https://venturebeat.com/orchestration/orchestration-is-the-new-challenge-for-cx-in-the-age-of-ai-agents)
-
-### 8. Claude, Codex, and Hermes installed unowned code inside corporate networks
-**Source:** Ars Technica · **Date:** 2026-08-27
-
-> 227 install commands were found in corporate docs pointing at code nobody owns.
-
-🔗 [Read more](https://arstechnica.com/security/2026/08/claude-codex-and-hermes-installed-unowned-code-inside-corporate-networks/)
-
-### 9. How OpenAI let a mob of LLM agents game a test and ransack Hugging Face
-**Source:** Ars Technica · **Date:** 2026-08-27
-
-> Without authorization, 1,200 OpenAI agents conspired among themselves to game a test.
-
-🔗 [Read more](https://arstechnica.com/security/2026/08/how-openai-let-a-mob-of-llm-agents-game-a-test-and-ransack-hugging-face/)
-
-### 10. AI agents meant to replace Meta workers made “large-scale, disruptive actions”
-**Source:** Ars Technica · **Date:** 2026-08-26
-
-> Report shows Meta's challenges replacing people with AI agents.
-
-🔗 [Read more](https://arstechnica.com/ai/2026/08/metas-scrapped-plans-to-go-ai-native-included-slashing-teams-by-60-percent/)
-
-### 11. Anthropic and OpenAI are joining the AI stage at TechCrunch Disrupt 2026
-**Source:** TechCrunch · **Date:** 2026-08-27
-
-> At TechCrunch Disrupt 2026, the AI Stage is back to dig into the single hottest topic in the community for the past few years, presented by Google for Startups.
-
-🔗 [Read more](https://techcrunch.com/2026/08/27/anthropic-and-openai-are-joining-the-ai-stage-at-techcrunch-disrupt-2026/)
-
-### 12. Barret Zoph, the Thinking Machines co-founder ousted before joining OpenAI, is now at Google
-**Source:** TechCrunch · **Date:** 2026-08-27
-
-> Zoph, who co-founded Thinking Machines Lab alongside Mira Murati and also served as the startup's CTO, led a brief stint at OpenAI and is now at Google.
-
-🔗 [Read more](https://techcrunch.com/2026/08/27/barret-zoph-the-thinking-machines-co-founder-who-defected-to-openai-is-now-at-google/)
-
-### 13. OpenAI, Anthropic, Google, and 100 other companies call for action to defend against rogue AI
-**Source:** TechCrunch · **Date:** 2026-08-27
-
-> Some of the world's largest tech companies and AI startups have come together to decry the current state of cybersecurity and to advertise a new solution that they say can ward off a new generation of cyber threats.
-
-🔗 [Read more](https://techcrunch.com/2026/08/27/openai-anthropic-google-and-100-other-companies-call-for-action-to-defend-against-rogue-ai/)
-
-### 14. Google’s AI Mode can now track flight prices, help book hotels, and more
-**Source:** TechCrunch · **Date:** 2026-08-27
-
-> The updates indicate that Google is looking to position AI Mode as an AI travel agent of sorts, as it's moving beyond simply helping users find information to actually handling parts of the trip-planning and booking process.
-
-🔗 [Read more](https://techcrunch.com/2026/08/27/googles-ai-mode-can-now-track-flight-prices-help-book-hotels-and-more/)
-
-### 15. Hugging Face is selling a cute $399 open source duck robot, Microduck
-**Source:** TechCrunch · **Date:** 2026-08-27
-
-> Clem Delangue, CEO of Hugging Face, said the Microduck is an “open-source robot you can teach new tricks with reinforcement learning.”
-
-🔗 [Read more](https://techcrunch.com/2026/08/27/hugging-face-is-selling-a-cute-399-open-source-duck-robot-microduck/)
-
----
-
-## 🚀 Trending AI & Agent Repos on GitHub
-
-New & notable open-source projects from the past week:
-
-| # | Repository | ⭐ Stars | Language | Description |
-|---|-----------|---------|----------|-------------|
-| 1 | [duty1g/x64dbg-mcp-server](https://github.com/duty1g/x64dbg-mcp-server) | 1,550 | Zig | x64dbg-MCP Server is a native MCP (Model Context Protocol) plugin for x64dbg that exposes the debugger's full functionality over HTTP. Connect any MCP-compatible AI assistant and control x64dbg progra |
-| 2 | [Forsy-AI/biosecurity-agent](https://github.com/Forsy-AI/biosecurity-agent) | 510 | TypeScript | AI agent that builds a live biosecurity world around any target. |
-| 3 | [kgoedecke/doop](https://github.com/kgoedecke/doop) | 459 | TypeScript | The open-source alternative to Paper.design. A multiplayer design canvas where humans and AI agents design together, live. MCP built in. |
-| 4 | [halofyai/halofy](https://github.com/halofyai/halofy) | 414 | TypeScript | Halofy is the open access and governance layer for AI agents across your organization. Identity, policy, provenance, audit, and signed erasure. |
-| 5 | [alchaincyf/huashu-excel](https://github.com/alchaincyf/huashu-excel) | 319 | Python | 数据分析与 Excel 全流程 skill：体检脏表、清洗、对齐需求、分析、对账、交付。让 AI 算出来的数字经得起追问。跨 agent 通用，依赖仅 openpyxl。 |
-| 6 | [HanyuanWang/LiveStream-Agent-Studio](https://github.com/HanyuanWang/LiveStream-Agent-Studio) | 292 | Python | 面向抖音直播电商的 Windows 本地 AI Agent Studio，贯通主播发现、直播洞察、直播复盘与短视频内容编导的统一智能工作流。 |
-| 7 | [Merit-Systems/OpenInstinct](https://github.com/Merit-Systems/OpenInstinct) | 123 | TypeScript | iMessage personal assistant + password vault |
-| 8 | [pinoox/neuromesh](https://github.com/pinoox/neuromesh) | 71 | Rust | The Biomimetic Context Engine & Neural Runtime for AI Coding Assistants |
-| 9 | [Colin0512/interview-assistant](https://github.com/Colin0512/interview-assistant) | 41 | TypeScript | AI-powered speaking assistant for interviews and oral exams |
-| 10 | [ikermy/air_tguserbot](https://github.com/ikermy/air_tguserbot) | 30 | Go | air_tguserbot is a text-voiceTelegram UserBot service within the marusia_ai ecosystem. It provides a complete Telegram session authorization cycle with HTTP/WebSocket API for bot management and messag |
-| 11 | [yacine-baghli/DYB-Pro](https://github.com/yacine-baghli/DYB-Pro) | 27 | Python | DYB Pro hands the protein design pipeline to Devin: state a goal, add sequences, and an autonomous in-silico cycle returns a ranked, order-ready wet-lab shortlist at a fraction of the cost. Devin orch |
-| 12 | [Morningstar202604/agentseed-mcp](https://github.com/Morningstar202604/agentseed-mcp) | 22 | Python | Anti-hallucination gate for AI coding agents — 8 MCP tools catch invented APIs (17 languages), fake "all tests pass" claims, and slopsquatting packages before they ship. Zero-dependency Agent Plugins  |
-| 13 | [Encephos/markdown-link-resolver](https://github.com/Encephos/markdown-link-resolver) | 13 | Python | A zero-dependency Python tool to resolve relative Markdown links and inline images as Base64 strings for RAG and Multimodal LLMs. |
-| 14 | [ruvnet/openAVO](https://github.com/ruvnet/openAVO) | 12 | N/A | OpenAVO is an open harness for long horizon autonomous reasoning, combining prediction, memory, supervision, verification, and adaptive action loops to improve agent reliability on ARC AGI style inter |
-| 15 | [Gaolaboratory/prompts-for-analytical-analysis](https://github.com/Gaolaboratory/prompts-for-analytical-analysis) | 11 | N/A | Prompts for analytical analysis — ready-to-use LLM prompts that build working analytical-chemistry and MS tools |
-
----
-
-_Generated by [AI Daily Digest](https://github.com) · Last updated: 2026-08-28 07:22 IST_
-
 
 ## 📂 Archive
 
-- [2026-08-28](digests/2026-08-28.md)
-- [2026-08-27](digests/2026-08-27.md)
+| Date | Link |
+|------|------|
+| 2026-08-28 | [View digest](digests/2026-08-28.md) |
+| 2026-08-27 | [View digest](digests/2026-08-27.md) |
 
 ---
 
-_This repo is updated automatically by a local agent. No human intervention needed!_
+_Updated automatically every day. No human intervention needed._
