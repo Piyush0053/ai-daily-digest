@@ -1,16 +1,17 @@
 # 🤖 AI Daily Digest
 
-Automated daily tracker of the **latest AI news** and **trending open-source AI/agent repositories** on GitHub.
+Automated daily tracker of the **latest AI news** and **trending open-source AI/agent repositories** — powered by NVIDIA NIM & Groq AI.
 
 Every day this repo auto-updates with:
-- 📰 Top AI news from MIT Technology Review, The Verge, VentureBeat, Ars Technica, TechCrunch
-- 🚀 Newly created AI/agent GitHub repos sorted by stars
+- 📰 AI news from MIT Tech Review, The Verge, VentureBeat, Ars Technica, TechCrunch
+- 🧠 AI-written summaries, importance scores & category tags (via NVIDIA NIM / Groq)
+- 🚀 Trending AI/agent GitHub repos sorted by stars (past 7 days)
 
 ---
 
 ## 📅 Latest Digest
 
-👉 **[2026-08-28](digests/2026-08-28.md)**
+👉 **[2026-08-29](digests/2026-08-29.md)**
 
 ---
 
@@ -18,9 +19,9 @@ Every day this repo auto-updates with:
 
 | Date | Link |
 |------|------|
-| 2026-08-28 | [View digest](digests/2026-08-28.md) |
-| 2026-08-27 | [View digest](digests/2026-08-27.md) |
+| 2026-08-29 | [View](digests/2026-08-29.md) |
+| 2026-08-28 | [View](digests/2026-08-28.md) |
+| 2026-08-27 | [View](digests/2026-08-27.md) |
 
 ---
-
-_Updated automatically every day. No human intervention needed._
+_Updated automatically every day. Powered by Groq AI + GitHub Actions._

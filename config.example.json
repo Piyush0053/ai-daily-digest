@@ -1,5 +1,6 @@
 {
   "_comment": "Copy this file to config.json and fill in your keys. config.json is gitignored.",
   "github_token": "",
+  "nvidia_api_key": "",
   "groq_api_key": ""
 }
