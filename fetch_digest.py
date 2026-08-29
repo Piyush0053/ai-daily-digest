@@ -1,15 +1,15 @@
 """
 AI Daily Digest - Phase 2
-Fetches AI news + GitHub repos, enriches them with Groq AI analysis,
+Fetches AI news + GitHub repos, enriches them with NVIDIA NIM AI analysis,
 and generates a smart, readable markdown digest.
 
 Phase 2 additions:
-  - Groq AI summarization (plain-English summaries for non-experts)
+  - NVIDIA NIM AI summarization (plain-English summaries for non-experts)
   - Importance scoring: Breaking / Important / Interesting
   - Category tagging: Safety / Models / Agents / Tools / Robotics / Business / Research / Policy
   - AI-written one-liner per article (what happened + why it matters)
   - Grouped digest sections by importance
-  - Graceful fallback to raw RSS summary if Groq fails
+  - Graceful fallback to raw RSS summary if AI enrichment fails
 """
 
 import json
@@ -60,16 +60,10 @@ MAX_REPOS           = 15
 MIN_ARTICLES_TO_RUN = 3
 SUMMARY_MAX_CHARS   = 350
 
-# LLM Engine config
-# Primary: NVIDIA NIM (fast, high context, flawless JSON)
+# LLM Engine config (NVIDIA NIM)
 NVIDIA_MODEL      = "meta/llama-3.2-11b-vision-instruct"
 NVIDIA_ENDPOINT   = "https://integrate.api.nvidia.com/v1/chat/completions"
 NVIDIA_CHUNK_SIZE = 5               # 5 articles per batch for optimal latency & stability
-
-# Fallback: Groq (compound model)
-GROQ_MODEL        = "groq/compound"
-GROQ_CHUNK_SIZE   = 3               # 3 articles per API call on Groq
-GROQ_PAUSE_SEC    = 2               # Seconds between Groq calls to avoid 429
 
 IMPORTANCE_EMOJI = {
     "breaking":    "🔥",
@@ -225,66 +219,6 @@ def call_nvidia(prompt: str, config: dict, max_tokens: int = 1800) -> str | None
     return None
 
 
-def call_groq(prompt: str, config: dict, model: str = GROQ_MODEL,
-              max_tokens: int = 2000) -> str | None:
-    """
-    Call Groq chat completions API with retry on 429.
-    Returns clean response text or None on failure.
-    """
-    api_key = config.get("groq_api_key", "")
-    if not api_key:
-        return None
-
-    for attempt in range(1, 4):  # Max 3 attempts
-        try:
-            resp = requests.post(
-                "https://api.groq.com/openai/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": model,
-                    "messages": [{"role": "user", "content": prompt}],
-                    "max_tokens": max_tokens,
-                    "temperature": 0.1,
-                },
-                timeout=60,
-            )
-
-            if resp.status_code == 200:
-                raw   = resp.json()["choices"][0]["message"]["content"]
-                usage = resp.json().get("usage", {})
-                content = strip_thinking(raw).strip()
-
-                if not content:
-                    print(f"    ⚠ Empty response from {model}")
-                    return None
-
-                print(f"    ✓ Groq ({model}) — {usage.get('prompt_tokens', 0)} in / "
-                      f"{usage.get('completion_tokens', 0)} out tokens")
-                return content
-
-            elif resp.status_code == 429:
-                wait = GROQ_PAUSE_SEC * (2 ** attempt)  # 4s, 8s, 16s
-                print(f"    ⚠ Rate limited (429), waiting {wait}s... (attempt {attempt}/3)")
-                time.sleep(wait)
-                continue
-
-            elif resp.status_code == 413:
-                print(f"    ⚠ Request too large (413)")
-                return None
-
-            else:
-                print(f"    ⚠ API error {resp.status_code}: {resp.text[:100]}")
-                return None
-
-        except Exception as e:
-            print(f"    ⚠ Request failed: {e}")
-            return None
-
-    print(f"    ⚠ All 3 attempts failed for {model}")
-    return None
 
 
 def extract_json(text: str):
@@ -357,74 +291,40 @@ Articles:
 
 def enrich_articles(articles: list[dict], config: dict) -> list[dict]:
     """
-    Enrich articles with AI:
-    1. Primary: NVIDIA NIM (meta/llama-3.2-11b-vision-instruct in batches of NVIDIA_CHUNK_SIZE)
-    2. Fallback: Groq (compound model in batches of GROQ_CHUNK_SIZE)
-    3. Final Fallback: Raw RSS summaries
+    Enrich articles with AI using NVIDIA NIM (meta/llama-3.2-11b-vision-instruct).
+    Fallback: Raw RSS summaries.
     """
     has_nvidia = bool(config.get("nvidia_api_key"))
-    has_groq   = bool(config.get("groq_api_key"))
     total = len(articles)
 
-    if not (has_nvidia or has_groq) or not articles:
-        print("  ⚠ No LLM API key configured — skipping AI enrichment")
+    if not has_nvidia or not articles:
+        print("  ⚠ No NVIDIA API key configured — skipping AI enrichment")
         return articles
 
     enrichments: dict[int, dict] = {}
 
-    # ── Attempt 1: NVIDIA NIM (Primary) ──────────────────────────────────────
-    if has_nvidia:
-        print(f"  → [1/2] Enriching {total} articles via NVIDIA NIM (chunks of {NVIDIA_CHUNK_SIZE})...")
-        chunks = [list(range(i, min(i + NVIDIA_CHUNK_SIZE, total)))
-                  for i in range(0, total, NVIDIA_CHUNK_SIZE)]
+    print(f"  → Enriching {total} articles via NVIDIA NIM (chunks of {NVIDIA_CHUNK_SIZE})...")
+    chunks = [list(range(i, min(i + NVIDIA_CHUNK_SIZE, total)))
+              for i in range(0, total, NVIDIA_CHUNK_SIZE)]
 
-        for chunk_num, chunk_indices in enumerate(chunks, 1):
-            chunk_articles = [articles[i] for i in chunk_indices]
-            start_idx = chunk_indices[0]
+    for chunk_num, chunk_indices in enumerate(chunks, 1):
+        chunk_articles = [articles[i] for i in chunk_indices]
+        start_idx = chunk_indices[0]
 
-            print(f"    → NVIDIA Chunk {chunk_num}/{len(chunks)} (articles {start_idx}–{chunk_indices[-1]})...")
+        print(f"    → NVIDIA Chunk {chunk_num}/{len(chunks)} (articles {start_idx}–{chunk_indices[-1]})...")
 
-            prompt = _build_enrichment_prompt(chunk_articles, index_offset=start_idx)
-            raw    = call_nvidia(prompt, config, max_tokens=1800)
-            parsed = extract_json(raw) if raw else None
+        prompt = _build_enrichment_prompt(chunk_articles, index_offset=start_idx)
+        raw    = call_nvidia(prompt, config, max_tokens=1800)
+        parsed = extract_json(raw) if raw else None
 
-            if parsed and isinstance(parsed, list):
-                for item in parsed:
-                    try:
-                        idx = int(item.get("index", -1))
-                        if idx in chunk_indices:
-                            enrichments[idx] = item
-                    except (ValueError, TypeError):
-                        continue
-
-    # ── Attempt 2: Groq Fallback for any missing articles ────────────────────
-    missing = [i for i in range(total) if i not in enrichments]
-    if missing and has_groq:
-        print(f"  → [2/2] {len(missing)} articles remaining, running Groq fallback...")
-        groq_chunks = [missing[i:i + GROQ_CHUNK_SIZE]
-                       for i in range(0, len(missing), GROQ_CHUNK_SIZE)]
-
-        for chunk_num, chunk_indices in enumerate(groq_chunks, 1):
-            chunk_articles = [articles[i] for i in chunk_indices]
-            start_idx = chunk_indices[0]
-
-            print(f"    → Groq Chunk {chunk_num}/{len(groq_chunks)} (articles {start_idx}–{chunk_indices[-1]})...")
-
-            prompt = _build_enrichment_prompt(chunk_articles, index_offset=start_idx)
-            raw    = call_groq(prompt, config, max_tokens=2000)
-            parsed = extract_json(raw) if raw else None
-
-            if parsed and isinstance(parsed, list):
-                for item in parsed:
-                    try:
-                        idx = int(item.get("index", -1))
-                        if idx in chunk_indices:
-                            enrichments[idx] = item
-                    except (ValueError, TypeError):
-                        continue
-
-            if chunk_num < len(groq_chunks):
-                time.sleep(GROQ_PAUSE_SEC)
+        if parsed and isinstance(parsed, list):
+            for item in parsed:
+                try:
+                    idx = int(item.get("index", -1))
+                    if idx in chunk_indices:
+                        enrichments[idx] = item
+                except (ValueError, TypeError):
+                    continue
 
     # ── Apply enrichments ────────────────────────────────────────────────────
     enriched_count = 0
@@ -443,7 +343,7 @@ def enrich_articles(articles: list[dict], config: dict) -> list[dict]:
             article["one_liner"]  = ""
             article["ai_summary"] = article["summary"]
 
-    provider_used = "NVIDIA NIM" if (has_nvidia and enrichments) else ("Groq" if enrichments else "Raw RSS")
+    provider_used = "NVIDIA NIM" if enrichments else "Raw RSS"
     print(f"  ✓ Enriched {enriched_count}/{total} articles (Provider: {provider_used})")
     return articles
 
@@ -686,7 +586,7 @@ def generate_digest(news: list[dict], repos: list[dict]) -> str:
     lines.append(
         f"_🤖 [AI Daily Digest](https://github.com/Piyush0053/ai-daily-digest) · "
         f"Updated: {today.strftime('%Y-%m-%d %H:%M IST')} · "
-        f"{'AI-enriched via NVIDIA NIM / Groq' if ai_enabled else 'Raw RSS'}_"
+        f"{'AI-enriched via NVIDIA NIM' if ai_enabled else 'Raw RSS'}_"
     )
     lines.append("")
 
@@ -703,11 +603,11 @@ def generate_readme(digest_dir: Path) -> str:
         "# 🤖 AI Daily Digest",
         "",
         "Automated daily tracker of the **latest AI news** and **trending open-source "
-        "AI/agent repositories** — powered by NVIDIA NIM & Groq AI.",
+        "AI/agent repositories** — powered by NVIDIA NIM.",
         "",
         "Every day this repo auto-updates with:",
         "- 📰 AI news from MIT Tech Review, The Verge, VentureBeat, Ars Technica, TechCrunch",
-        "- 🧠 AI-written summaries, importance scores & category tags (via NVIDIA NIM / Groq)",
+        "- 🧠 AI-written summaries, importance scores & category tags (via NVIDIA NIM)",
         "- 🚀 Trending AI/agent GitHub repos sorted by stars (past 7 days)",
         "",
         "---",
@@ -729,7 +629,7 @@ def generate_readme(digest_dir: Path) -> str:
     lines += [
         "",
         "---",
-        "_Updated automatically every day. Powered by Groq AI + GitHub Actions._",
+        "_Updated automatically every day. Powered by NVIDIA NIM + GitHub Actions._",
         "",
     ]
     return "\n".join(lines)
@@ -788,8 +688,8 @@ def main():
         print(f"  ⚠ Too few articles ({len(news)} < {MIN_ARTICLES_TO_RUN}). Aborting.")
         sys.exit(2)
 
-    # Step 2: AI enrichment via Groq
-    print("\n[2/4] AI enrichment via Groq...")
+    # Step 2: AI enrichment via NVIDIA NIM
+    print("\n[2/4] AI enrichment via NVIDIA NIM...")
     news = enrich_articles(news, config)
 
     # Step 3: Fetch GitHub repos
