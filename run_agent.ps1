@@ -46,8 +46,7 @@ function Test-InternetConnection {
 
 Write-Log "Agent started"
 
-# FIX: Lock timeout reduced from 30 min to 10 min.
-# Old value was too long — a crash would block the next 30-minute window.
+# Lock timeout: 10 min
 if (Test-Path $LOCK_FILE) {
     $lockAge = (Get-Date) - (Get-Item $LOCK_FILE).LastWriteTime
     if ($lockAge.TotalMinutes -lt 10) {
@@ -61,7 +60,7 @@ if (Test-Path $LOCK_FILE) {
 New-Item -Path $LOCK_FILE -ItemType File -Force | Out-Null
 
 try {
-    # Wait for internet — up to 5 minutes with HTTP check (not ICMP ping)
+    # Wait for internet: up to 5 minutes with HTTP check
     Write-Log "Checking internet connection..."
     $retries = 0
     while (-not (Test-InternetConnection)) {
@@ -82,7 +81,7 @@ try {
     $digestFile = "digests\$today.md"
 
     if (Test-Path $digestFile) {
-        Write-Log "Digest for $today already exists. Trying to push any pending commits..."
+        Write-Log "Digest for $today already exists. Pushing any pending commits..."
         git push origin main 2>&1 | ForEach-Object { Write-Log "  git: $_" }
         exit 0
     }
@@ -93,10 +92,9 @@ try {
     $exitCode     = $LASTEXITCODE
     $pythonOutput | ForEach-Object { Write-Log "  py: $_" }
 
-    # FIX: Handle exit code 2 = "skip commit" (not enough articles)
-    # Old code: always tried to commit even on failure
+    # Handle exit code 2 = skip commit (not enough articles)
     if ($exitCode -eq 2) {
-        Write-Log "Skipping commit — not enough articles fetched. Will retry on next trigger."
+        Write-Log "Skipping commit: not enough articles fetched. Will retry on next trigger."
         exit 0
     }
 
@@ -122,7 +120,6 @@ try {
     $pushExit   = $LASTEXITCODE
     $pushOutput | ForEach-Object { Write-Log "  git: $_" }
 
-    # FIX: Old code logged "success" even when push failed silently
     if ($pushExit -eq 0) {
         Write-Log "Successfully committed and pushed digest for $today"
     } else {
