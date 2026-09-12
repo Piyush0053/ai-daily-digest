@@ -42,6 +42,22 @@ function Test-InternetConnection {
     }
 }
 
+function Sync-WithRemote {
+    <#
+    .SYNOPSIS
+        Pulls remote changes via rebase before pushing.
+        --autostash handles any uncommitted local changes safely.
+        Prevents push rejections when remote has diverged (e.g. GitHub web edits).
+    #>
+    Write-Log "Syncing with remote (git pull --rebase --autostash)..."
+    $pullOutput = git pull --rebase --autostash origin main 2>&1
+    $pullExit   = $LASTEXITCODE
+    $pullOutput | ForEach-Object { Write-Log "  git: $_" }
+    if ($pullExit -ne 0) {
+        Write-Log "WARNING: git pull --rebase failed (exit $pullExit). Attempting push anyway..."
+    }
+}
+
 # --- Main Logic ---
 
 Write-Log "Agent started"
@@ -82,7 +98,13 @@ try {
 
     if (Test-Path $digestFile) {
         Write-Log "Digest for $today already exists. Pushing any pending commits..."
-        git push origin main 2>&1 | ForEach-Object { Write-Log "  git: $_" }
+        Sync-WithRemote
+        $pushOutput = git push origin main 2>&1
+        $pushExit   = $LASTEXITCODE
+        $pushOutput | ForEach-Object { Write-Log "  git: $_" }
+        if ($pushExit -ne 0) {
+            Write-Log "WARNING: Push failed (exit $pushExit)."
+        }
         exit 0
     }
 
@@ -108,13 +130,16 @@ try {
         exit 1
     }
 
-    # Git add, commit, push
+    # Git add, commit, then sync with remote before push
     Write-Log "Committing and pushing to GitHub..."
 
     git add -A 2>&1 | ForEach-Object { Write-Log "  git: $_" }
 
     $commitMsg = "AI Digest for $today - Auto-generated"
     git commit -m $commitMsg 2>&1 | ForEach-Object { Write-Log "  git: $_" }
+
+    # Pull remote changes (rebase) BEFORE pushing to avoid divergence rejections
+    Sync-WithRemote
 
     $pushOutput = git push origin main 2>&1
     $pushExit   = $LASTEXITCODE
