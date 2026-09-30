@@ -11,7 +11,7 @@ Every day this repo auto-updates with:
 
 ## 📅 Latest Digest
 
-👉 **[2026-09-29](digests/2026-09-29.md)**
+👉 **[2026-09-30](digests/2026-09-30.md)**
 
 ---
 
@@ -19,6 +19,7 @@ Every day this repo auto-updates with:
 
 | Date | Link |
 |------|------|
+| 2026-09-30 | [View](digests/2026-09-30.md) |
 | 2026-09-29 | [View](digests/2026-09-29.md) |
 | 2026-09-28 | [View](digests/2026-09-28.md) |
 | 2026-09-27 | [View](digests/2026-09-27.md) |
