@@ -26,6 +26,13 @@ if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
     }
 }
 
+# --- Quick exit: if today's digest was already pushed successfully, skip everything ---
+# This prevents any visible window flash on duplicate triggers.
+$today_quick = Get-Date -Format "yyyy-MM-dd"
+if (Test-Path "$PROJECT_DIR\.done-$today_quick") {
+    exit 0
+}
+
 function Write-Log {
     param([string]$Message)
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
@@ -104,6 +111,9 @@ try {
         $pushOutput | ForEach-Object { Write-Log "  git: $_" }
         if ($pushExit -ne 0) {
             Write-Log "WARNING: Push failed (exit $pushExit)."
+        } else {
+            # Mark today as done so future triggers exit instantly and silently
+            New-Item -Path "$PROJECT_DIR\.done-$today" -ItemType File -Force | Out-Null
         }
         exit 0
     }
@@ -147,6 +157,8 @@ try {
 
     if ($pushExit -eq 0) {
         Write-Log "Successfully committed and pushed digest for $today"
+        # Mark today as done so future triggers exit instantly and silently
+        New-Item -Path "$PROJECT_DIR\.done-$today" -ItemType File -Force | Out-Null
     } else {
         Write-Log "WARNING: Commit succeeded but push failed (exit $pushExit). Will retry on next trigger."
     }

@@ -6,4 +6,5 @@ agent.log
 .running.lock
 config.json
 debug/
+.done-*
 
