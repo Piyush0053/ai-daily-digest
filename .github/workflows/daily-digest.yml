@@ -1,0 +1,114 @@
+# Daily digest cloud pipeline
+#
+# Copy this file into Piyush0053/ai-daily-digest/.github/workflows/daily-digest.yml
+#
+# Replaces the local PowerShell agent + Windows Task Scheduler: digests are
+# generated in the cloud every day, committed to this repo, and the live site
+# is notified so it updates within seconds.
+#
+# Secrets needed (repo Settings → Secrets and variables → Actions):
+#   NVIDIA_API_KEY        — your NVIDIA NIM key (the one in your local config.json)
+#   DIGEST_REFRESH_TOKEN  — optional; only if the site's refresh endpoint is locked down
+#
+# The built-in GITHUB_TOKEN (github.token) is used automatically for GitHub
+# API calls and for pushing — no PAT required.
+
+name: Daily digest
+
+on:
+  schedule:
+    # Primary run at 09:00 IST. The two later runs are retries in case a
+    # news feed or the AI API hiccups; the generator skips if today's
+    # digest already exists, so they are always safe.
+    - cron: "30 3 * * *"   # 09:00 IST
+    - cron: "30 6 * * *"   # 12:00 IST
+    - cron: "30 10 * * *"  # 16:00 IST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-digest
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write config.json from secrets
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          GITHUB_TOKEN_VALUE: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import json, os
+          cfg = {
+              "github_token": os.environ.get("GITHUB_TOKEN_VALUE", ""),
+              "nvidia_api_key": os.environ.get("NVIDIA_API_KEY", ""),
+          }
+          with open("config.json", "w", encoding="utf-8") as f:
+              json.dump(cfg, f)
+          PY
+
+      - name: Run digest generator
+        id: gen
+        # Exit 2 = not enough articles found → a later scheduled run retries.
+        # Exit 1 = crash → same; the job is marked failed either way.
+        run: python fetch_digest.py
+        continue-on-error: true
+
+      - name: Remove generated config (gitignored, but never commit it)
+        if: always()
+        run: rm -f config.json
+
+      - name: Commit and push digest
+        if: steps.gen.outcome == 'success()'
+        run: |
+          git config user.name  "digest-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes — today's digest was already generated."
+            exit 0
+          fi
+          git commit -m "AI Digest for $(TZ=Asia/Kolkata date +%F) - Auto-generated"
+          # Rebase in case the remote moved between checkout and now
+          git pull --rebase --autostash origin main
+          git push origin main
+
+      - name: Notify the live site
+        # Skips when generation found nothing new (outcome != success) or the
+        # commit step made no changes (its exit 0 means nothing was pushed).
+        if: steps.gen.outcome == 'success()'
+        env:
+          DIGEST_REFRESH_TOKEN: ${{ secrets.DIGEST_REFRESH_TOKEN }}
+          REFRESH_URL: https://curate-ai-chronicle.lovable.app/api/public/refresh
+        run: |
+          # A change check: if nothing was committed above, the digest already
+          # existed and the site already has it — but a ping is still harmless
+          # and keeps this step simple.
+          ARGS=()
+          if [ -n "$DIGEST_REFRESH_TOKEN" ]; then
+            ARGS=(-H "X-Refresh-Token: $DIGEST_REFRESH_TOKEN")
+          fi
+          curl --fail --silent --show-error \
+            --retry 3 --retry-delay 5 --retry-all-errors \
+            -X POST "$REFRESH_URL" \
+            -H "Content-Type: application/json" \
+            "${ARGS[@]}" \
+            -d "{\"source\":\"github-actions-daily\",\"ref\":\"$GITHUB_SHA\"}"
